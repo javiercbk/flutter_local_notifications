@@ -10,15 +10,27 @@ typedef Future<dynamic> MessageHandler(String message);
 /// The available intervals for periodically showing notifications
 enum RepeatInterval { EveryMinute, Hourly, Daily, Weekly }
 
+const SUNDAY = 1;
+const MONDAY = 2;
+const TUESDAY = 4;
+const WEDNESDAY = 8;
+const THURSDAY = 16;
+const FRIDAY = 32;
+const SATURDAY = 64;
+const WEEKDAYS = MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY;
+const ALL_DAYS = SUNDAY | WEEKDAYS | SATURDAY;
+
 class Time {
   final int hour;
   final int minute;
   final int second;
+  final int days;
 
-  Time([this.hour = 0, this.minute = 0, this.second = 0]) {
+  Time([this.hour = 0, this.minute = 0, this.second = 0, this.days = ALL_DAYS]) {
     assert(this.hour >= 0 && this.hour < 24);
     assert(this.minute >= 0 && this.minute < 60);
     assert(this.second >= 0 && this.second < 60);
+    assert(this.days >= 0 && this.days <= 128);
   }
 
   Map<String, int> toMap() {
@@ -26,6 +38,7 @@ class Time {
       "hour": hour,
       "minute": minute,
       "second": second,
+      "days": days
     };
   }
 }
@@ -125,12 +138,11 @@ class FlutterLocalNotificationsPlugin {
     {String payload}) async {
     Map<String, dynamic> serializedPlatformSpecifics =
         _retrievePlatformSpecificNotificationDetails(notificationDetails);
-    await _channel.invokeMethod('showDailyAtTime', <String, dynamic>{
+    await _channel.invokeMethod('scheduleDaily', <String, dynamic>{
       'id': id,
       'title': title,
       'body': body,
       'calledAt': new DateTime.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.Daily.index,
       'repeatTime': notificationTime.toMap(),
       'platformSpecifics': serializedPlatformSpecifics,
       'payload': payload ?? ''

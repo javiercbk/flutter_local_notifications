@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationManagerCompat;
 
+import java.util.Calendar;
+
 /**
  * Created by michaelbui on 24/3/18.
  */
@@ -18,8 +20,20 @@ public class ScheduledNotificationReceiver extends BroadcastReceiver {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         Notification notification = intent.getParcelableExtra(FlutterLocalNotificationsPlugin.NOTIFICATION);
         int notificationId = intent.getIntExtra(FlutterLocalNotificationsPlugin.NOTIFICATION_ID, 0);
-        notificationManager.notify(notificationId, notification);
+        int repeatDays = intent.getIntExtra(FlutterLocalNotificationsPlugin.REPEAT_DAYS, -1);
         boolean repeat = intent.getBooleanExtra(FlutterLocalNotificationsPlugin.REPEAT, false);
+        boolean shouldNotify = true;
+        if (repeat && repeatDays != -1) {
+            Calendar calendar = Calendar.getInstance();
+            int day = calendar.get(Calendar.DAY_OF_WEEK);
+            if ((repeatDays & day) != day) {
+                // repeat day does not match
+                shouldNotify = false;
+            }
+        }
+        if (shouldNotify) {
+            notificationManager.notify(notificationId, notification);
+        }
         if (repeat) {
             return;
         }
